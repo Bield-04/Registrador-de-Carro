@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garagem FastAPI</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 500px; margin: 40px auto; padding: 20px; background-color: #f4f4f9; }
+        h1, h2 { color: #333; }
+        form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 30px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        input { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
+        button { padding: 10px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+        button:hover { background-color: #45a049; }
+        ul { list-style-type: none; padding: 0; }
+        li { background: white; padding: 15px; margin-bottom: 8px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .placa-badge { background-color: #e0e0e0; padding: 4px 8px; border-radius: 4px; font-family: monospace; font-weight: bold; font-size: 14px; border: 1px solid #999; }
+        .success-msg { color: green; font-weight: bold; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <h1>🚗 Cadastrar Carro</h1>
+    <div id="mensagem" class="success-msg"></div>
+
+    <form id="carroForm">
+        <input type="text" id="marca" placeholder="Marca (Ex: Hyundai)" required>
+        <input type="text" id="modelo" placeholder="Modelo (Ex: I30)" required>
+        <input type="text" id="ano" placeholder="Ano (Ex: 2010)" required>
+        <input type="text" id="placa" placeholder="Placa (Ex: ABC-123)" required>
+        <button type="submit">Cadastrar Carro</button>
+    </form>
+
+    <h2>📋 Carros Cadastrados</h2>
+    <ul id="listaCarros"></ul>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000/Carros/";
+
+        // Função para buscar os carros da API e mostrar na tela
+        async function buscarCarros() {
+            try {
+                const response = await fetch(API_URL);
+                const carros = await response.json();
+                
+                const lista = document.getElementById("listaCarros");
+                lista.innerHTML = ""; // Limpa a lista antes de atualizar
+
+                carros.forEach(carro => {
+                    const li = document.createElement("li");
+                    // ATUALIZADO: Incluindo a Placa na exibição
+                    li.innerHTML = `
+                        <div>
+                            <strong>${carro.Marca}</strong> 
+                            <span>${carro.Modelo} (${carro.Ano})</span>
+                        </div>
+                        <span class="placa-badge">${carro.Placa}</span>
+                    `;
+                    lista.appendChild(li);
+                });
+            } catch (error) {
+                console.error("Erro ao buscar carros:", error);
+            }
+        }
+
+        // Função para enviar um novo carro (POST)
+        document.getElementById("carroForm").addEventListener("submit", async (e) => {
+            e.preventDefault(); // Impede a página de recarregar
+
+            // ATUALIZADO: Pegando o valor da Placa do formulário
+            const novoCarro = {
+                Marca: document.getElementById("marca").value,
+                Modelo: document.getElementById("modelo").value,
+                Ano: document.getElementById("ano").value,
+                Placa: document.getElementById("placa").value
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(novoCarro)
+                });
+
+                const resultado = await response.json();
+                
+                // Exibe mensagem de sucesso
+                document.getElementById("mensagem").innerText = resultado.mensagem;
+                
+                // Limpa o formulário e atualiza a lista
+                document.getElementById("carroForm").reset();
+                buscarCarros();
+
+                // Limpa a mensagem após 3 segundos
+                setTimeout(() => document.getElementById("mensagem").innerText = "", 3000);
+
+            } catch (error) {
+                console.error("Erro ao cadastrar carro:", error);
+            }
+        });
+
+        // Executa ao carregar a página para trazer os carros já salvos
+        buscarCarros();
+    </script>
+</body>
+</html>
